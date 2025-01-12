@@ -5,7 +5,7 @@
 	"scripts": {
 		"build": "npx tsc",
 		"start": "prisma migrate deploy && node --no-warnings dist/index.js",
-		"dev": "nodemon src/index.ts | npx pino-pretty",
+		"dev": "concurrently \"nodemon src/index.ts | npx pino-pretty\" \"npx graphql-codegen -w\"",
 		"format": "npx prettier src --write"
 	},
 	"dockerImage": "ghcr.io/rso-magisterium/classroom-service",
@@ -51,6 +51,7 @@
 		"@types/passport-jwt": "^4.0.1",
 		"@types/swagger-jsdoc": "^6.0.4",
 		"@types/swagger-ui-express": "^4.1.7",
+		"concurrently": "^9.1.2",
 		"nodemon": "^3.1.9",
 		"openapi-types": "^12.1.3",
 		"pino-pretty": "^13.0.0",

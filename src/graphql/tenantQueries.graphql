@@ -1,0 +1,18 @@
+query getTenant($tenantId: String = "") {
+  tenant(where: { id: $tenantId }) {
+    id
+    name
+    adminId
+  }
+}
+
+query getTenantWithUsers($tenantId: String = "", $userIds: [String!] = "") {
+  tenant(where: { id: $tenantId }) {
+    id
+    name
+    users(where: { id: { in: $userIds } }) {
+      id
+      name
+    }
+  }
+}
