@@ -1,0 +1,36 @@
+services:
+  server:
+    build:
+      context: .
+    ports:
+      - 3002:3000
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://classroom-svc:verysecretpassword@db/classroom-service?schema=public
+      USER_SERVICE_URL: http://host.docker.internal:3000
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres:17
+    restart: always
+    ports:
+      - 5433:5432
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: classroom-svc
+      POSTGRES_PASSWORD: verysecretpassword
+      POSTGRES_DB: classroom-service
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "classroom-service"]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+
+volumes:
+  db-data:
