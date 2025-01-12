@@ -24,6 +24,81 @@ const apiDoc: OpenAPIV3.Document = {
         },
         required: ["message"],
       },
+      Classroom: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+          },
+          name: {
+            type: "string",
+          },
+          teachers: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          students: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          content: {
+            type: "string",
+          },
+        },
+        required: ["id", "name"],
+      },
+      ClassroomFull: {
+        type: "object",
+        properties: {
+          id: {
+            type: "string",
+          },
+          name: {
+            type: "string",
+          },
+          teachers: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          students: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+          content: {
+            type: "string",
+          },
+          forumPosts: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                id: {
+                  type: "string",
+                },
+                author: {
+                  type: "string",
+                },
+                content: {
+                  type: "string",
+                },
+                createdAt: {
+                  type: "string",
+                },
+              },
+              required: ["id", "author", "content", "createdAt"],
+            },
+          },
+        },
+        required: ["id", "name", "teachers", "content", "forumPosts"],
+      },
     },
     responses: {
       MissingParameters: {

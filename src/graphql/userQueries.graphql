@@ -1,0 +1,21 @@
+query getUser($id: String = "") {
+  user(where: { id: $id }) {
+    id
+    email
+    name
+    superAdmin
+    tenants {
+      id
+      name
+      adminId
+    }
+  }
+}
+
+query getTenantUsers($tenantId: String = "") {
+  users(where: { tenants: { some: { id: { equals: $tenantId } } } }) {
+    id
+    name
+    email
+  }
+}
