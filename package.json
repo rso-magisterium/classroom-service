@@ -3,7 +3,8 @@
 	"version": "1.0.0",
 	"description": "",
 	"scripts": {
-		"build": "npx tsc",
+		"build": "npm run gen:proto && npx tsc",
+		"gen:proto": "npx proto-loader-gen-types --grpcLib=@grpc/grpc-js --longs=Number --enums=String --defaults --oneofs -I ./proto -O ./src/proto/generated classrooms.proto",
 		"start": "prisma migrate deploy && node --no-warnings dist/index.js",
 		"dev": "concurrently \"nodemon src/index.ts | npx pino-pretty\" \"npx graphql-codegen -w\"",
 		"format": "npx prettier src --write"
@@ -21,6 +22,8 @@
 	"author": "Miha Meglic <miha@meglic.dev>",
 	"type": "commonjs",
 	"dependencies": {
+		"@grpc/grpc-js": "^1.12.5",
+		"@grpc/proto-loader": "^0.7.13",
 		"@prisma/client": "^6.2.1",
 		"@urql/core": "^5.1.0",
 		"body-parser": "^1.20.3",
