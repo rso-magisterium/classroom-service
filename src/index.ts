@@ -7,8 +7,11 @@ import { json } from "body-parser";
 import cookies from "cookie-parser";
 import passport from "passport";
 import { Strategy, ExtractJwt } from "passport-jwt";
+import prisma from "./prisma";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import * as grpc from "@grpc/grpc-js";
+import grpcServer from "./proto/protoServer";
 
 import apiDoc from "./apiDoc";
 import logger from "./logger";
@@ -57,7 +60,7 @@ app.use("/api", api);
 
 app.get("/healthz", async (req, res) => {
   try {
-    // await prisma.$queryRaw`SELECT 1`;
+    await prisma.$queryRaw`SELECT 1`;
   } catch (err) {
     logger.error({ request: { path: req.originalUrl }, error: err }, "Prisma healthcheck failed");
     res.status(500).json({ message: "Prisma error", error: err });
@@ -75,6 +78,19 @@ app.use(
   "/api/docs",
   swaggerUi.serve,
   swaggerUi.setup(undefined, undefined, undefined, undefined, undefined, "/api/openapi.json")
+);
+
+grpcServer.bindAsync(
+  `0.0.0.0:${process.env.PORT_GRPC}` || "0.0.0.0:3010",
+  grpc.ServerCredentials.createInsecure(),
+  (err, port) => {
+    if (err) {
+      logger.error({ error: err }, "Failed to bind gRPC server");
+      process.exit(101);
+    }
+
+    logger.info(`gRPC server is running at localhost:${port}`);
+  }
 );
 
 app.listen(port, () => {

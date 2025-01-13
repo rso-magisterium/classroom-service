@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+message User {
+  string tenantId = 1;
+  string userId = 2;
+}
+
+message Classroom {
+  string tenantId = 1;
+  string classroomId = 2;
+  string name = 3;
+}
+
+message UserClassrooms {
+  string userId = 1;
+  string tenantId = 2;
+  repeated Classroom classrooms = 3 [packed=true];
+}
+
+service ClassroomService {
+  rpc GetUserClassrooms (User) returns (UserClassrooms);
+}

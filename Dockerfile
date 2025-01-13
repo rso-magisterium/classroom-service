@@ -10,6 +10,7 @@ RUN apk add --no-cache openssl
 WORKDIR /usr/src/app
 
 COPY prisma ./prisma/
+COPY proto ./proto/
 
 ################################################################################
 # Create a stage for installing production dependecies.

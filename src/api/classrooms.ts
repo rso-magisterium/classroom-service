@@ -19,6 +19,9 @@ const router = Router();
  *     parameters:
  *       - in: path
  *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: "Classrooms"
