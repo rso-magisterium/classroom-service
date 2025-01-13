@@ -10,6 +10,7 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://classroom-svc:verysecretpassword@db/classroom-service?schema=public
       USER_SERVICE_URL: http://host.docker.internal:3000
+      SCHEDULE_SERVICE_URL_GRPC: host.docker.internal:3011
     env_file:
       - .env
     depends_on:
