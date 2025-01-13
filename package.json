@@ -4,7 +4,7 @@
 	"description": "",
 	"scripts": {
 		"build": "npm run gen:proto && npx tsc",
-		"gen:proto": "npx proto-loader-gen-types --grpcLib=@grpc/grpc-js --longs=Number --enums=String --defaults --oneofs -I ./proto -O ./src/proto/generated classrooms.proto",
+		"gen:proto": "npx proto-loader-gen-types --grpcLib=@grpc/grpc-js --longs=Number --enums=String --defaults --oneofs -I ./proto -O ./src/proto/generated/classrooms classrooms.proto && npx proto-loader-gen-types --grpcLib=@grpc/grpc-js --longs=Number --enums=String --defaults --oneofs -I ./proto -O ./src/proto/generated/schedule schedule.proto",
 		"start": "prisma migrate deploy && node --no-warnings dist/index.js",
 		"dev": "concurrently \"nodemon src/index.ts | npx pino-pretty\" \"npx graphql-codegen -w\"",
 		"format": "npx prettier src --write"

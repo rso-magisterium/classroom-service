@@ -10,6 +10,7 @@ import {
   GetUserQuery,
   GetUserQueryVariables,
 } from "../graphql/generated/graphql";
+import grpcClient from "../proto/scheduleClient";
 
 const router = Router();
 
@@ -156,8 +157,14 @@ router.post("/:tenantId", async (req, res) => {
  *     parameters:
  *       - in: path
  *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
  *       - in: path
  *         name: classroomId
+ *         schema:
+ *           type: string
+ *         required: true
  *     responses:
  *       200:
  *         description: "Classroom"
@@ -302,8 +309,14 @@ router.get("/:tenantId/:classroomId", async (req, res) => {
  *     parameters:
  *       - in: path
  *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
  *       - in: path
  *         name: classroomId
+ *         schema:
+ *           type: string
+ *         required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -473,8 +486,14 @@ router.patch("/:tenantId/:classroomId", async (req, res) => {
  *     parameters:
  *       - in: path
  *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
  *       - in: path
  *         name: classroomId
+ *         schema:
+ *           type: string
+ *         required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -618,8 +637,14 @@ router.delete("/:tenantId/:classroomId", async (req, res) => {
  *     parameters:
  *       - in: path
  *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
  *       - in: path
  *         name: classroomId
+ *         schema:
+ *           type: string
+ *         required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -740,8 +765,14 @@ router.patch("/:tenantId/:classroomId/content", async (req, res) => {
  *     parameters:
  *       - in: path
  *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
  *       - in: path
  *         name: classroomId
+ *         schema:
+ *           type: string
+ *         required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -854,6 +885,162 @@ router.post("/:tenantId/:classroomId/forumPost", async (req, res) => {
     "Post created"
   );
   res.json({ message: "Post created" });
+});
+
+/**
+ * @openapi
+ * "/api/classroom/{tenantId}/{classroomId}/schedule":
+ *   post:
+ *     summary: Add schedule event to classroom
+ *     description: Modifying classroom schedule requires teacher or admin (tenant or super admin)
+ *     tags: [Classroom]
+ *     security:
+ *       - cookieAuth: []
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tenantId
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in: path
+ *         name: classroomId
+ *         schema:
+ *           type: string
+ *         required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               start:
+ *                 type: string
+ *                 format: date-time
+ *               end:
+ *                 type: string
+ *                 format: date-time
+ *               repeat:
+ *                 type: string
+ *                 enum: [NONE, DAILY, WEEKLY, MONTHLY, YEARLY]
+ *               repeatUntil:
+ *                 type: string
+ *                 format: date-time
+ *             required: [start, end, repeat]
+ *     responses:
+ *       200:
+ *         description: "Event added"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Response"
+ *       "400":
+ *         $ref: "#/components/responses/MissingParameters"
+ *       401:
+ *         $ref: "#/components/responses/Unauthorized"
+ *       403:
+ *         $ref: "#/components/responses/Forbidden"
+ *       404:
+ *         $ref: "#/components/responses/NotFound"
+ *       500:
+ *         $ref: "#/components/responses/ServerError"
+ */
+router.post("/:tenantId/:classroomId/schedule", async (req, res) => {
+  // Shouldn't happen (user should be authenticated)
+  if (!req.user) {
+    res.status(401).json({ message: "Unauthorized" });
+    return;
+  }
+
+  let isAdmin = req.user?.superAdmin;
+
+  // Check if tenant exists
+  const { data: userData } = await gqlClient.query<GetTenantQuery, GetTenantQueryVariables>(GetTenantDocument, {
+    tenantId: req.params.tenantId,
+  });
+
+  // Check if user is admin of the tenant
+  if (userData?.tenant?.adminId === req.user.id) {
+    isAdmin = true;
+  }
+
+  // Check if user is teacher
+  const classroomUsers = await prisma.classroom.findUnique({
+    where: {
+      id: req.params.classroomId,
+      tenantId: req.params.tenantId,
+    },
+    select: {
+      teachers: true,
+    },
+  });
+
+  if (!classroomUsers) {
+    logger.debug(
+      { request: { path: req.originalUrl, method: req.method, params: req.params }, user: req.user },
+      "Classroom not found"
+    );
+    res.status(404).json({ message: "Classroom not found" });
+    return;
+  }
+
+  const isTeacher = classroomUsers?.teachers.includes(req.user.id);
+
+  if (!isTeacher && !isAdmin) {
+    logger.info(
+      { request: { path: req.originalUrl, method: req.method, params: req.params }, user: req.user },
+      "Unauthorized"
+    );
+    res.status(401).send("Unauthorized");
+    return;
+  }
+
+  // Add schedule event to classroom
+  const start = new Date(req.body.start);
+  const end = new Date(req.body.end);
+  const repeat = req.body.repeat;
+  const repeatUntil = new Date(req.body.repeatUntil) || undefined;
+
+  if (!start || !end || !repeat) {
+    logger.debug(
+      { request: { path: req.originalUrl, method: req.method, body: req.body, params: req.params }, user: req.user },
+      "Missing required parameters"
+    );
+    res.status(400).json({ message: "Start, end and repeat are required" });
+    return;
+  }
+
+  grpcClient.Create(
+    {
+      tenantId: req.params.tenantId,
+      classroom: req.params.classroomId,
+      start: start.getTime(),
+      end: end.getTime(),
+      repeat,
+      repeatEnd: repeatUntil?.getTime() || undefined,
+    },
+    (err, response) => {
+      if (err) {
+        logger.error(
+          {
+            request: { path: req.originalUrl, method: req.method, body: req.body, params: req.params },
+            user: req.user,
+            error: err,
+          },
+          "Error creating schedule event"
+        );
+        res.status(500).json({ message: "Error creating schedule event", error: err });
+        return;
+      }
+
+      logger.info(
+        { request: { path: req.originalUrl, method: req.method, body: req.body, params: req.params }, user: req.user },
+        "Event added"
+      );
+      res.json({ message: "Event added" });
+    }
+  );
 });
 
 export default router;

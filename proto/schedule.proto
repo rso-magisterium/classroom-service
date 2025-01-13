@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+message ScheduleEntry {
+  optional string id = 1;
+  string tenantId = 2;
+  string classroom = 3;
+  int64 start = 4;
+  int64 end = 5;
+  Repeat repeat = 6;
+  int64 repeatEnd = 7;
+  optional int64 createdAt = 8;
+  optional int64 updatedAt = 9;
+}
+
+message ScheduleEntryLocator {
+  string id = 1;
+}
+
+message Classroom {
+  string tenantId = 2;
+  string classroom = 3;
+}
+
+enum Repeat {
+  NONE = 0;
+  DAILY = 1;
+  WEEKLY = 2;
+  MONTHLY = 3;
+  YEARLY = 4;
+}
+
+service ScheduleService {
+  rpc Create (ScheduleEntry) returns (ScheduleEntry);
+  rpc Read (ScheduleEntryLocator) returns (ScheduleEntry);
+  rpc Update (ScheduleEntry) returns (ScheduleEntry);
+  rpc Delete (ScheduleEntryLocator) returns (ScheduleEntry);
+  rpc List (Classroom) returns (stream ScheduleEntry);
+}

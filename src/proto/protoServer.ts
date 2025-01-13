@@ -2,9 +2,9 @@ import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import prisma from "../prisma";
 
-import { ProtoGrpcType } from "./generated/classrooms";
-import { Classroom } from "./generated/Classroom";
-import { ClassroomServiceHandlers } from "./generated/ClassroomService";
+import { ProtoGrpcType } from "./generated/classrooms/classrooms";
+import { Classroom } from "./generated/classrooms/Classroom";
+import { ClassroomServiceHandlers } from "./generated/classrooms/ClassroomService";
 import logger from "../logger";
 
 const scheduleDef = protoLoader.loadSync("proto/classrooms.proto", {
