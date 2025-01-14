@@ -80,18 +80,15 @@ app.use(
   swaggerUi.setup(undefined, undefined, undefined, undefined, undefined, "/api/openapi.json")
 );
 
-grpcServer.bindAsync(
-  `0.0.0.0:${process.env.PORT_GRPC}` || "0.0.0.0:3010",
-  grpc.ServerCredentials.createInsecure(),
-  (err, port) => {
-    if (err) {
-      logger.error({ error: err }, "Failed to bind gRPC server");
-      process.exit(101);
-    }
-
-    logger.info(`gRPC server is running at localhost:${port}`);
+let grpcServerBind: string = process.env.PORT_GRPC ? `0.0.0.0:${process.env.PORT_GRPC}` : "0.0.0.0:3010";
+grpcServer.bindAsync(grpcServerBind, grpc.ServerCredentials.createInsecure(), (err, port) => {
+  if (err) {
+    logger.error({ error: err }, "Failed to bind gRPC server");
+    process.exit(101);
   }
-);
+
+  logger.info(`gRPC server is running at localhost:${port}`);
+});
 
 app.listen(port, () => {
   logger.info(`User service is running at http://localhost:${port}`);
